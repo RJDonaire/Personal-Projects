@@ -22,6 +22,12 @@ for anime_id in range(checkpoint, endpoint):
 
     if scrape.select("div.error404"):
         print("Webpage doesn't exist... Loading next page...\n")
+
+        # saves 404 pages
+        no_page = load_data('./data/no_anime.json')
+        no_page['no_anime'].append(anime_id)
+        save_data2('./data/no_anime.json', no_page)
+
         create_checkpoint(anime_id)
         time.sleep(10)
         continue

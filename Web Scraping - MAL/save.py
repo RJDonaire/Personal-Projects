@@ -17,6 +17,11 @@ def save_data(filename, data):
         json.dump(data, file, indent = 4)
     create_backup(data)
 
+# save data to file
+def save_data2(filename, data):
+    with open(filename, 'w+') as file:
+        json.dump(data, file, indent = 4)
+
 def create_backup(data):
     with open('./data/backup.json', 'w') as file:
         json.dump(data, file, indent = 4)
