@@ -8,7 +8,7 @@ from extract_leftside import extract_leftside
 from save import *
 
 checkpoint = load_checkpoint() + 1
-endpoint = checkpoint + 1000
+endpoint = checkpoint + 2500
 
 for anime_id in range(checkpoint, endpoint):
     # site-to-visit
