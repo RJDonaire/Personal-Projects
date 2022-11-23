@@ -1,3 +1,4 @@
+import os
 import re
 import json
 import time
@@ -7,6 +8,14 @@ from bs4 import BeautifulSoup as bs
 from extract_leftside import extract_leftside
 from save import *
 
+# paths
+data_path = './data2/'
+
+# files
+no_anime = 'no_anime.json'
+anime_file = 'anime_data.json'
+
+# global variables
 checkpoint = load_checkpoint() + 1
 endpoint = checkpoint + 2500
 
@@ -17,46 +26,50 @@ for anime_id in range(checkpoint, endpoint):
     # soup object
     scrape = bs(url.content, 'html.parser')
 
-    time.sleep(20)
     # scraping info
-
     if scrape.select("div.error404"):
+        no_page = os.path.join(data_path, no_anime)
         print("Webpage doesn't exist... Loading next page...\n")
 
-        # saves 404 pages
-        no_page = load_data('./data/no_anime.json')
-        no_page['no_anime'].append(anime_id)
-        save_data2('./data/no_anime.json', no_page)
+        no_anime_ids = load_data(os.path.join(data_path, no_anime))
 
-        create_checkpoint(anime_id)
+        if str(anime_id) in no_anime_ids:
+            print(f'Anime data overlap: {anime_id}')
+            continue
+        no_anime_ids[anime_id] = None
+        save_data(no_page, no_anime_ids)
+
         time.sleep(10)
         continue
-    else:
-        # loading file
-        data = load_data('./data/anime_data.json')
 
-        # setting anime data
-        title = scrape.select("div.h1-title")[0].text
+    # loading file
+    anime_page = os.path.join(data_path, anime_file)
+    anime_data = load_data(anime_page)
 
-        anime_data = {f'{anime_id} {title}': {}}
+    # setting anime data
+    if str(anime_id) in anime_data: 
+        print(f'Anime data overlap: {anime_id}')
+        continue
 
-        # extracting anime data
-        score = scrape.select("div.score-label")[0].text
-        score_users = scrape.select("div[data-title='score']")[0]['data-user']
-        synopsis = scrape.select("p[itemprop='description']")[0].text
-        anime_info = scrape.select("div.leftside")[0].text
-        anime_ls = extract_leftside(anime_info)
+    anime_data[anime_id] = {}
 
-        anime_data[f'{anime_id} {title}']['Score'] = score
-        anime_data[f'{anime_id} {title}']['Score_Users'] = score_users
-        anime_data[f'{anime_id} {title}']['Synopsis'] = synopsis
+    # extracting anime data
+    title = scrape.select("div.h1-title")[0].text
+    score = scrape.select("div.score-label")[0].text
+    score_users = scrape.select("div[data-title='score']")[0]['data-user']
+    synopsis = scrape.select("p[itemprop='description']")[0].text
+    anime_info = scrape.select("div.leftside")[0].text
+    anime_ls = extract_leftside(anime_info)
+    
+    anime_data[anime_id]['Title'] = title
+    anime_data[anime_id]['Score'] = score
+    anime_data[anime_id]['Score_Users'] = score_users
+    anime_data[anime_id]['Synopsis'] = synopsis
+    anime_data[anime_id] = {**anime_data[anime_id], **anime_ls}
 
-        anime_data[f'{anime_id} {title}'] = {**anime_data[f'{anime_id} {title}'], **anime_ls}
-        c_anime_data = {**data, **anime_data}
+    # saving file
+    save_data(anime_page, anime_data)
 
-        # saving file
-        save_data('./data/anime_data.json', c_anime_data)
-
-        print(f'{anime_id} Processing webpage complete!\n')
+    print(f'{anime_id} Processing webpage complete!\n')
 
     time.sleep(10)
